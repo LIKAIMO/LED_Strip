@@ -1,7 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <FlexiTimer2.h>
 
-const int MYADDR = 1;//芯片地址用来确定是哪个货架
+const int MYADDR = 0;//芯片地址用来确定是哪个货架
 
 #define NUMPIXELS      60    //每条灯个数
 #define R Adafruit_NeoPixel::Color(255,0,0)
@@ -62,7 +62,7 @@ void flash(void)
 void setup() 
 {
   //初始化串口
-  Serial3.begin(115200);
+  Serial.begin(115200);
   Serial1.begin(115200);
   pinMode(22,OUTPUT);//检测状态
   //初始化灯带
@@ -80,17 +80,17 @@ void setup()
 void loop() 
 {
   //读串口
-  if (Serial3.available() > 0) 
+  if (Serial.available() > 0) 
   {
     //预读取一个字符
-    char t_serialChar = Serial3.peek();
+    char t_serialChar = Serial.peek();
     //收到N时开始接收
     if (t_serialChar == 'N') 
     {
       //收到$符号结束
       while (t_serialChar != '$') 
       {
-        t_serialChar = Serial3.read();
+        t_serialChar = Serial.read();
         //判断接收的字符是否是自己想要的
         if (isalnum(t_serialChar) || t_serialChar == '.' || t_serialChar == '_') 
         {
@@ -132,7 +132,7 @@ void loop()
     }
     else
     {
-      Serial3.read();
+      Serial.read();
     }
   }
   //lightsStatus[0][0] = ON_RED;
@@ -155,7 +155,7 @@ void loop()
     pixels4.show();
   }
   //把串口的数据刷新
-  Serial3.flush();
+  Serial.flush();
 }
 void lightsDecide(void) 
 {
@@ -259,7 +259,7 @@ void dataToLights(void)
     //0号是主机
     if (MYADDR == rack)
     {
-      Serial3.print(dataStr[1]);
+      Serial.print(dataStr[1]);
 
       if (dataStr[1] == "allOff") 
       {
