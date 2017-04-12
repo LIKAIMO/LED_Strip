@@ -10,7 +10,7 @@ const int MYADDR = 0;//芯片地址用来确定是哪个货架
 #define NC Adafruit_NeoPixel::Color(0,0,0)
 #define PIXELS_COUNT    5     //多少条灯
 
-enum 
+enum
 {
   NOP = 0,       //啥都不做
   OFF,           //灭灯
@@ -47,6 +47,8 @@ bool off = true;
 String str = "";
 //传递给下一级的字符串
 String nextStr = "";
+//新的字符串
+String newStr = "";
 //切割的字符串数据
 String dataStr[5];
 int rack;       //货架
@@ -55,16 +57,16 @@ int columnStart;     //列开头
 int columnEnd;       //列结束
 int flashDelayCount; //闪烁延时
 //定时中断函数
-void flash(void) 
+void flash(void)
 {
-  flashDelayCount++;
+  flashDelayCount = 1;
 }
-void setup() 
+void setup()
 {
   //初始化串口
   Serial.begin(115200);
   Serial1.begin(115200);
-  pinMode(22,OUTPUT);//检测状态
+  pinMode(22, OUTPUT); //检测状态
   //初始化灯带
   pixels1.begin();
   pixels0.begin();
@@ -77,42 +79,42 @@ void setup()
   FlexiTimer2::start();
 }
 
-void loop() 
+void loop()
 {
   //读串口
-  if (Serial.available() > 0) 
+  if (Serial.available() > 0)
   {
     //预读取一个字符
     char t_serialChar = Serial.peek();
     //收到N时开始接收
-    if (t_serialChar == 'N') 
+    if (t_serialChar == 'N')
     {
       //收到$符号结束
-      while (t_serialChar != '$') 
+      while (t_serialChar != '$')
       {
         t_serialChar = Serial.read();
         //判断接收的字符是否是自己想要的
-        if (isalnum(t_serialChar) || t_serialChar == '.' || t_serialChar == '_') 
+        if (isalnum(t_serialChar) || t_serialChar == '.' || t_serialChar == '_')
         {
           //保存到字符串中
-          str += t_serialChar;
+          newStr += t_serialChar;
         }
         //字符串太长放弃接收
-        if (str.length() > 35) 
+        if (newStr.length() > 35)
         {
           break;
         }
       }
       //分割字符串
-      if (str.length() < 35 || str.length() >= 10) 
+      if (newStr != nextStr)
       {
-        nextStr = str;
+        nextStr = str = newStr;
         int j = 0;
-        while (str.indexOf('_') > 0) 
+        while (str.indexOf('_') > 0)
         {
-          for (int i = 0; i < str.indexOf('_'); i++) 
+          for (int i = 0; i < str.indexOf('_'); i++)
           {
-            if (isalnum(str.charAt(i)) || str.charAt(i) == '.') 
+            if (isalnum(str.charAt(i)) || str.charAt(i) == '.')
             {
               dataStr[j] += str.charAt(i);
             }
@@ -120,7 +122,7 @@ void loop()
           str = str.substring(str.indexOf('_') + 1);
           j++;
         }
-        for (int i = 0; i < str.length(); i++) 
+        for (int i = 0; i < str.length(); i++)
         {
           dataStr[j] += str.charAt(i);
         }
@@ -141,25 +143,33 @@ void loop()
   //lightsStatus[3][0] = ON_GREEN;
   //lightsStatus[4][0] = ON_RED;
 
-  lightsDecide();
+  
   //0.5S 显示一次
-  if (flashDelayCount > 4) 
+  if (flashDelayCount)
   {
+    static uint8_t count = 0;
+    
     flashDelayCount = 0;
-    off = !off;
-    digitalWrite(22,off);
+    if (count > 4)
+    {
+      off = !off;
+      digitalWrite(22, off);
+      count = 0;
+    }
+    lightsDecide();
     pixels0.show();
     pixels1.show();
     pixels2.show();
     pixels3.show();
     pixels4.show();
+    count++;
   }
   //把串口的数据刷新
   Serial.flush();
 }
-void lightsDecide(void) 
+void lightsDecide(void)
 {
-  for (int i = 0; i < PIXELS_COUNT; i++) 
+  for (int i = 0; i < PIXELS_COUNT; i++)
   {
     //选取灯带
     switch (i)
@@ -182,10 +192,10 @@ void lightsDecide(void)
       default:
         break;
     }
-    for (int j = 0; j < NUMPIXELS; j++) 
+    for (int j = 0; j < NUMPIXELS; j++)
     {
       //对每个灯赋予状态
-      switch (lightsStatus[i][j]) 
+      switch (lightsStatus[i][j])
       {
         case NOP:
           break;
@@ -206,31 +216,31 @@ void lightsDecide(void)
           lightsStatus[i][j] = NOP;
           break;
         case FLASH_RED:
-          if (off) 
+          if (off)
           {
             pixels.setPixelColor(j, NC);
-          } 
-          else 
+          }
+          else
           {
             pixels.setPixelColor(j, R);
           }
           break;
         case FLASH_GREEN:
-          if (off) 
+          if (off)
           {
             pixels.setPixelColor(j, NC);
-          } 
-          else 
+          }
+          else
           {
             pixels.setPixelColor(j, G);
           }
           break;
         case FLASH_BLUE:
-          if (off) 
+          if (off)
           {
             pixels.setPixelColor(j, NC);
-          } 
-          else 
+          }
+          else
           {
             pixels.setPixelColor(j, B);
           }
@@ -240,16 +250,16 @@ void lightsDecide(void)
   }
 }
 //对分割出来的字符串进行状态赋值
-void dataToLights(void) 
+void dataToLights(void)
 {
   if (dataStr[0].charAt(0) == 'N' &&
       dataStr[0].charAt(1) == 'O' &&
-      dataStr[0].charAt(2) == '.') 
-      {
+      dataStr[0].charAt(2) == '.')
+  {
     String t_str;
-    for (int i = 3; i < dataStr[0].length(); i++) 
+    for (int i = 3; i < dataStr[0].length(); i++)
     {
-      if (!isdigit(dataStr[0].charAt(i))) 
+      if (!isdigit(dataStr[0].charAt(i)))
       {
         return;
       }
@@ -261,89 +271,92 @@ void dataToLights(void)
     {
       Serial.print(dataStr[1]);
 
-      if (dataStr[1] == "allOff") 
+      if (dataStr[1] == "allOff")
       {
-        for (int i = 0; i < PIXELS_COUNT; i++) 
+        for (int i = 0; i < PIXELS_COUNT; i++)
         {
-          for (int j = 0; j < NUMPIXELS; j++) 
+          for (int j = 0; j < NUMPIXELS; j++)
           {
             lightsStatus[i][j] = OFF;
           }
         }
         return;
       }
-      if (dataStr[1] == "off") 
+      if (dataStr[1] == "off")
       {
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++) 
+        for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = OFF;
         }
         return;
       }
-      if (dataStr[1] == "onR") 
+      if (dataStr[1] == "onR")
       {
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++) 
+        for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = ON_RED;
         }
         return;
       }
-      if (dataStr[1] == "onG") 
+      if (dataStr[1] == "onG")
       {
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++) 
+        for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = ON_GREEN;
         }
         return;
       }
-      if (dataStr[1] == "onB") 
+      if (dataStr[1] == "onB")
       {
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++) 
+        for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = ON_BLUE;
         }
         return;
       }
-      if (dataStr[1] == "flashG") 
+      if (dataStr[1] == "flashG")
       {
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++) 
+        off = 0;
+        for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = FLASH_GREEN;
         }
         return;
       }
-      if (dataStr[1] == "flashR") 
+      if (dataStr[1] == "flashR")
       {
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++) 
+        off = 0;
+        for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = FLASH_RED;
         }
         return;
       }
-      if (dataStr[1] == "flashB") 
+      if (dataStr[1] == "flashB")
       {
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++) 
+        off = 0;
+        for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = FLASH_BLUE;
         }
@@ -358,9 +371,9 @@ void dataToLights(void)
   }
 }
 
-void clearData(void) 
+void clearData(void)
 {
-  for (int i = 0; i < 6; i++) 
+  for (int i = 0; i < 6; i++)
   {
     dataStr[i] = "";
   }
