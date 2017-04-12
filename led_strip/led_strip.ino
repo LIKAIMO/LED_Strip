@@ -4,9 +4,9 @@
 const int MYADDR = 0;//芯片地址用来确定是哪个货架
 
 #define NUMPIXELS      60    //每条灯个数
-#define R Adafruit_NeoPixel::Color(255,0,0)
-#define G Adafruit_NeoPixel::Color(0,255,0)
-#define B Adafruit_NeoPixel::Color(0,0,255)
+#define R Adafruit_NeoPixel::Color(10,0,0)
+#define G Adafruit_NeoPixel::Color(0,10,0)
+#define B Adafruit_NeoPixel::Color(0,0,10)
 #define NC Adafruit_NeoPixel::Color(0,0,0)
 #define PIXELS_COUNT    5     //多少条灯
 
