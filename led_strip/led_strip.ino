@@ -3,7 +3,7 @@
 
 const int MYADDR = 0;//芯片地址用来确定是哪个货架
 
-#define NUMPIXELS      60    //每条灯个数
+#define NUMPIXELS      120    //每条灯个数
 #define R Adafruit_NeoPixel::Color(10,0,0)
 #define G Adafruit_NeoPixel::Color(0,10,0)
 #define B Adafruit_NeoPixel::Color(0,0,10)
