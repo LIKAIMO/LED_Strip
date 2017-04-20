@@ -1,7 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <FlexiTimer2.h>
 
-const int MYADDR = 0;//芯片地址用来确定是哪个货架
+const int MYADDR = 1;//芯片地址用来确定是哪个货架
 
 #define NUMPIXELS      120    //每条灯个数
 #define R Adafruit_NeoPixel::Color(10,0,0)
@@ -65,7 +65,7 @@ void setup()
 {
   //初始化串口
   Serial.begin(115200);
-  Serial1.begin(115200);
+  Serial2.begin(115200);
   pinMode(22, OUTPUT); //检测状态
   //初始化灯带
   pixels1.begin();
@@ -150,7 +150,7 @@ void loop()
     static uint8_t count = 0;
     
     flashDelayCount = 0;
-    if (count > 4)
+    if (count > 3)
     {
       off = !off;
       digitalWrite(22, off);
@@ -162,6 +162,7 @@ void loop()
     pixels2.show();
     pixels3.show();
     pixels4.show();
+    Serial2.print(nextStr + "$");
     count++;
   }
   //把串口的数据刷新
@@ -362,11 +363,6 @@ void dataToLights(void)
         }
         return;
       }
-    }
-    else
-    {
-      Serial1.print(nextStr + "$");
-      //Serial.println(nextStr);
     }
   }
 }
