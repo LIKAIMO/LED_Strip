@@ -1,12 +1,12 @@
 #include <Adafruit_NeoPixel.h>
 #include <FlexiTimer2.h>
 
-const int MYADDR = 1;//芯片地址用来确定是哪个货架
+const int MYADDR = 0;//芯片地址用来确定是哪个货架
 
 #define NUMPIXELS      120    //每条灯个数
-#define R Adafruit_NeoPixel::Color(50,0,0)
-#define G Adafruit_NeoPixel::Color(0,50,0)
-#define B Adafruit_NeoPixel::Color(0,0,50)
+#define R Adafruit_NeoPixel::Color(35,0,0)
+#define G Adafruit_NeoPixel::Color(0,35,0)
+#define B Adafruit_NeoPixel::Color(0,0,35)
 #define NC Adafruit_NeoPixel::Color(0,0,0)
 #define PIXELS_COUNT    5     //多少条灯
 
@@ -73,6 +73,52 @@ void setup()
   pixels2.begin();
   pixels3.begin();
   pixels4.begin();
+
+  for (int j = 0; j < NUMPIXELS; j++)
+  {
+    pixels0.setPixelColor(j, R);
+    pixels1.setPixelColor(j, R);
+    pixels2.setPixelColor(j, R);
+    pixels3.setPixelColor(j, R);
+    pixels4.setPixelColor(j, R);
+  }
+
+  pixels0.show();
+  pixels1.show();
+  pixels2.show();
+  pixels3.show();
+  pixels4.show();
+  delay(5000);
+  for (int j = 0; j < NUMPIXELS; j++)
+  {
+    pixels0.setPixelColor(j, G);
+    pixels1.setPixelColor(j, G);
+    pixels2.setPixelColor(j, G);
+    pixels3.setPixelColor(j, G);
+    pixels4.setPixelColor(j, G);
+  }
+
+  pixels0.show();
+  pixels1.show();
+  pixels2.show();
+  pixels3.show();
+  pixels4.show();
+  delay(5000);
+  for (int j = 0; j < NUMPIXELS; j++)
+  {
+    pixels0.setPixelColor(j, NC);
+    pixels1.setPixelColor(j, NC);
+    pixels2.setPixelColor(j, NC);
+    pixels3.setPixelColor(j, NC);
+    pixels4.setPixelColor(j, NC);
+  }
+
+  pixels0.show();
+  pixels1.show();
+  pixels2.show();
+  pixels3.show();
+  pixels4.show();
+
   //初始化定时器
   FlexiTimer2::set(100, 1.0 / 1000, flash); // call every 1 1ms "ticks"
   //启动定时器
@@ -82,7 +128,7 @@ void setup()
 void loop()
 {
   //读串口
-  if (Serial.available() > 0)
+  if (Serial.available() > 1)
   {
     //预读取一个字符
     char t_serialChar = Serial.peek();
@@ -106,7 +152,7 @@ void loop()
         }
       }
       //分割字符串
-      if (newStr != nextStr)
+      if (newStr.length() > 10 && newStr != nextStr)
       {
         nextStr = str = newStr;
         int j = 0;
@@ -143,14 +189,14 @@ void loop()
   //lightsStatus[3][0] = ON_GREEN;
   //lightsStatus[4][0] = ON_RED;
 
-  
+
   //0.5S 显示一次
   if (flashDelayCount)
   {
     static uint8_t count = 0;
-    
+
     flashDelayCount = 0;
-    if (count > 3)
+    if (count > 2)
     {
       off = !off;
       digitalWrite(22, off);
@@ -253,11 +299,20 @@ void lightsDecide(void)
 //对分割出来的字符串进行状态赋值
 void dataToLights(void)
 {
+  for (int i = 0; i < newStr.length(); i++)
+  {
+    if (newStr.charAt(i) != nextStr.charAt(i))
+    {
+      return;
+    }
+  }
+
   if (dataStr[0].charAt(0) == 'N' &&
       dataStr[0].charAt(1) == 'O' &&
       dataStr[0].charAt(2) == '.')
   {
     String t_str;
+    //Serial.println(nextStr);
     for (int i = 3; i < dataStr[0].length(); i++)
     {
       if (!isdigit(dataStr[0].charAt(i)))
@@ -270,8 +325,6 @@ void dataToLights(void)
     //0号是主机
     if (MYADDR == rack)
     {
-      Serial.print(dataStr[1]);
-
       if (dataStr[1] == "allOff")
       {
         for (int i = 0; i < PIXELS_COUNT; i++)
@@ -281,6 +334,14 @@ void dataToLights(void)
             lightsStatus[i][j] = OFF;
           }
         }
+        return;
+      }
+      if (dataStr[4].length() > 0)
+      {
+        //Serial.println(nextStr);
+      }
+      else
+      {
         return;
       }
       if (dataStr[1] == "off")
@@ -332,7 +393,7 @@ void dataToLights(void)
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        off = 0;
+        //off = 0;
         for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = FLASH_GREEN;
@@ -344,7 +405,7 @@ void dataToLights(void)
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        off = 0;
+        //off = 0;
         for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = FLASH_RED;
@@ -356,7 +417,7 @@ void dataToLights(void)
         row = dataStr[2].toInt();
         columnStart = dataStr[3].toInt();
         columnEnd = dataStr[4].toInt();
-        off = 0;
+        //off = 0;
         for (int k = columnStart; k <= columnEnd; k++)
         {
           lightsStatus[row][k] = FLASH_BLUE;
