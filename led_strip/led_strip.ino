@@ -1,6 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <FlexiTimer2.h>
 
+#define VERSION 1.0
 const int MYADDR = 0;//芯片地址用来确定是哪个货架
 
 #define NUMPIXELS      120    //每条灯个数
@@ -118,6 +119,9 @@ void setup()
   pixels2.show();
   pixels3.show();
   pixels4.show();
+
+  Serial.print("version: MakerFire_V");
+  Serial.println(VERSION);
 
   //初始化定时器
   FlexiTimer2::set(100, 1.0 / 1000, flash); // call every 1 1ms "ticks"
@@ -338,7 +342,7 @@ void dataToLights(void)
       }
       if (dataStr[4].length() > 0)
       {
-        //Serial.println(nextStr);
+        Serial.println(nextStr);
       }
       else
       {
