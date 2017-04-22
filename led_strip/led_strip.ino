@@ -150,7 +150,7 @@ void loop()
           newStr += t_serialChar;
         }
         //字符串太长放弃接收
-        if (newStr.length() > 25)
+        if (newStr.length() > 22)
         {
           break;
         }
@@ -305,7 +305,7 @@ void dataToLights(void)
       dataStr[0].charAt(2) == '.')
   {
     String t_str;
-    
+    int i;
     for (int i = 3; i < dataStr[0].length(); i++)
     {
       if (!isdigit(dataStr[0].charAt(i)))
@@ -315,7 +315,7 @@ void dataToLights(void)
       t_str += dataStr[0].charAt(i);
     }
     rack = t_str.toInt();
-    int i;
+
     for (i = 0; i < newStr.length(); i++)
     {
       if (newStr.charAt(i) != nextStr.charAt(i))
@@ -346,87 +346,36 @@ void dataToLights(void)
       {
         return;
       }
-
+      uint8_t t_status = NOP;
       if (dataStr[1] == "off")
       {
-        row = dataStr[2].toInt();
-        columnStart = dataStr[3].toInt();
-        columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++)
-        {
-          lightsStatus[row][k] = OFF;
-        }
-        return;
+        t_status = OFF;
       }
-      if (dataStr[1] == "onR")
+      else if (dataStr[1] == "onR")
       {
-        row = dataStr[2].toInt();
-        columnStart = dataStr[3].toInt();
-        columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++)
-        {
-          lightsStatus[row][k] = ON_RED;
-        }
-        return;
+        t_status = ON_RED;
       }
-      if (dataStr[1] == "onG")
+      else if (dataStr[1] == "onG")
       {
-        row = dataStr[2].toInt();
-        columnStart = dataStr[3].toInt();
-        columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++)
-        {
-          lightsStatus[row][k] = ON_GREEN;
-        }
-        return;
+        t_status = ON_GREEN;
       }
-      if (dataStr[1] == "onB")
+      else if (dataStr[1] == "onB")
       {
-        row = dataStr[2].toInt();
-        columnStart = dataStr[3].toInt();
-        columnEnd = dataStr[4].toInt();
-        for (int k = columnStart; k <= columnEnd; k++)
-        {
-          lightsStatus[row][k] = ON_BLUE;
-        }
-        return;
+        t_status = ON_BLUE;
       }
-      if (dataStr[1] == "flashG")
+      else if (dataStr[1] == "flashR")
       {
-        row = dataStr[2].toInt();
-        columnStart = dataStr[3].toInt();
-        columnEnd = dataStr[4].toInt();
-        //off = 0;
-        for (int k = columnStart; k <= columnEnd; k++)
-        {
-          lightsStatus[row][k] = FLASH_GREEN;
-        }
-        return;
+        t_status = FLASH_RED;
       }
-      if (dataStr[1] == "flashR")
+      else if (dataStr[1] == "flashG")
       {
-        row = dataStr[2].toInt();
-        columnStart = dataStr[3].toInt();
-        columnEnd = dataStr[4].toInt();
-        //off = 0;
-        for (int k = columnStart; k <= columnEnd; k++)
-        {
-          lightsStatus[row][k] = FLASH_RED;
-        }
-        return;
+        t_status = FLASH_GREEN;
       }
-      if (dataStr[1] == "flashB")
+      else if (dataStr[1] == "flashB")
       {
-        row = dataStr[2].toInt();
-        columnStart = dataStr[3].toInt();
-        columnEnd = dataStr[4].toInt();
-        //off = 0;
-        for (int k = columnStart; k <= columnEnd; k++)
-        {
-          lightsStatus[row][k] = FLASH_BLUE;
-        }
-        return;
+        t_status = FLASH_BLUE;
       }
+      reduceStatus(t_status);
     }
   }
 }
@@ -440,4 +389,22 @@ void clearData(void)
   str = "";
 }
 
+void reduceStatus(uint8_t t_status)
+{
+  if (!isdigit(dataStr[2][0]) || !isdigit(dataStr[3][0]) || !isdigit(dataStr[4][0]))
+  {
+    return;
+  }
+  row = dataStr[2].toInt();
+  columnStart = dataStr[3].toInt();
+  columnEnd = dataStr[4].toInt();
+  if (row > PIXELS_COUNT || columnStart > columnEnd || columnEnd > NUMPIXELS - 1)
+  {
+    return;
+  }
+  for (int k = columnStart; k <= columnEnd; k++)
+  {
+    lightsStatus[row][k] = t_status;
+  }
+}
 
