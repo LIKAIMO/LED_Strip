@@ -150,16 +150,17 @@ void loop()
           newStr += t_serialChar;
         }
         //字符串太长放弃接收
-        if (newStr.length() > 35)
+        if (newStr.length() > 25)
         {
           break;
         }
       }
       //分割字符串
-      if (newStr.length() > 10 && newStr != nextStr)
+      if (newStr.length() > 10)
       {
-        nextStr = str = newStr;
         int j = 0;
+        str = newStr;
+
         while (str.indexOf('_') > 0)
         {
           for (int i = 0; i < str.indexOf('_'); i++)
@@ -187,12 +188,6 @@ void loop()
       Serial.read();
     }
   }
-  //lightsStatus[0][0] = ON_RED;
-  //lightsStatus[1][0] = ON_GREEN;
-  //lightsStatus[2][0] = ON_RED;
-  //lightsStatus[3][0] = ON_GREEN;
-  //lightsStatus[4][0] = ON_RED;
-
 
   //0.5S 显示一次
   if (flashDelayCount)
@@ -303,20 +298,14 @@ void lightsDecide(void)
 //对分割出来的字符串进行状态赋值
 void dataToLights(void)
 {
-  for (int i = 0; i < newStr.length(); i++)
-  {
-    if (newStr.charAt(i) != nextStr.charAt(i))
-    {
-      return;
-    }
-  }
+
 
   if (dataStr[0].charAt(0) == 'N' &&
       dataStr[0].charAt(1) == 'O' &&
       dataStr[0].charAt(2) == '.')
   {
     String t_str;
-    //Serial.println(nextStr);
+    
     for (int i = 3; i < dataStr[0].length(); i++)
     {
       if (!isdigit(dataStr[0].charAt(i)))
@@ -326,28 +315,38 @@ void dataToLights(void)
       t_str += dataStr[0].charAt(i);
     }
     rack = t_str.toInt();
+    int i;
+    for (i = 0; i < newStr.length(); i++)
+    {
+      if (newStr.charAt(i) != nextStr.charAt(i))
+      {
+        break;
+      }
+    }
+    if (i < newStr.length() - 1)
+    {
+      nextStr = newStr;
+      Serial.println(nextStr);
+    }
+    else
+    {
+      return;
+    }
     //0号是主机
     if (MYADDR == rack)
     {
+
       if (dataStr[1] == "allOff")
       {
-        for (int i = 0; i < PIXELS_COUNT; i++)
-        {
-          for (int j = 0; j < NUMPIXELS; j++)
-          {
-            lightsStatus[i][j] = OFF;
-          }
-        }
+        memset(lightsStatus, OFF, PIXELS_COUNT * NUMPIXELS);
         return;
       }
-      if (dataStr[4].length() > 0)
-      {
-        Serial.println(nextStr);
-      }
-      else
+
+      if (dataStr[4].length() == 0)
       {
         return;
       }
+
       if (dataStr[1] == "off")
       {
         row = dataStr[2].toInt();
