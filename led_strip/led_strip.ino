@@ -1,8 +1,9 @@
 #include <Adafruit_NeoPixel.h>
 #include <FlexiTimer2.h>
+#include <EEPROM.h>
 
-#define VERSION 1.0
-const int MYADDR = 0;//芯片地址用来确定是哪个货架
+#define VERSION "1.1"
+int MYADDR = 1;//芯片地址用来确定是哪个货架
 
 #define NUMPIXELS      120    //每条灯个数
 #define R Adafruit_NeoPixel::Color(35,0,0)
@@ -64,9 +65,12 @@ void flash(void)
 }
 void setup()
 {
+
   //初始化串口
   Serial.begin(115200);
   Serial2.begin(115200);
+
+
   pinMode(22, OUTPUT); //检测状态
   //初始化灯带
   pixels1.begin();
@@ -122,6 +126,25 @@ void setup()
 
   Serial.print("version: MakerFire_V");
   Serial.println(VERSION);
+
+  //读取0位置的EEPROM，判断是主机还是从机
+  uint8_t e2promValue = EEPROM.read(0);
+  if (e2promValue == 0xff) //如果里面还没有东西，赋默认值
+  {
+    EEPROM.write(0, MYADDR);
+  }
+  else
+  {
+    MYADDR = e2promValue;
+    if (MYADDR == 0)
+    {
+      Serial.println("current is master, if want to modify to slave, please input \"NO.9_mkf_0_0$\"");
+    }
+    else if (MYADDR == 1)
+    {
+      Serial.println("current is slave, if want to modify to master, please input \"NO.8_mkf_0_0$\"");
+    }
+  }
 
   //初始化定时器
   FlexiTimer2::set(100, 1.0 / 1000, flash); // call every 1 1ms "ticks"
@@ -326,7 +349,22 @@ void dataToLights(void)
     if (i < newStr.length() - 1)
     {
       nextStr = newStr;
-      Serial.println(nextStr);
+      if (rack == 8)
+      {
+        EEPROM.write(0, 0);
+        MYADDR = 0;
+        Serial.println("current is master");
+      }
+      else if (rack == 9)
+      {
+        EEPROM.write(0, 1);
+        MYADDR = 1;
+        Serial.println("current is slave");
+      }
+      else
+      {
+        Serial.println(nextStr);
+      }
     }
     else
     {
